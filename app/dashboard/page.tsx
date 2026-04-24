@@ -12,6 +12,24 @@ export default function DashboardPage() {
   const [productName, setProductName] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
+  const [incomingOrders, setIncomingOrders] = useState<any[]>([]);
+  const fetchIncomingOrders = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(
+        `
+        id,
+        quantity,
+        status,
+        created_at,
+        buyer:buyer_id (full_name, phone_number),
+        products!inner (id, name, farmer_id)`,
+      )
+      .eq('products.farmer_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (!error) setIncomingOrders(data);
+  };
 
   useEffect(() => {
     const getSession = async () => {
@@ -26,12 +44,13 @@ export default function DashboardPage() {
 
       setUser(session.user);
 
+      fetchIncomingOrders(session.user.id); // Ambil pesanan masuk untuk petani yang login
+
       // Ambil data profil tambahan dari tabel profiles
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
 
       setProfile(profileData);
     };
-
     getSession();
   }, [router]);
 
@@ -51,6 +70,22 @@ export default function DashboardPage() {
     }
   };
 
+  const handleConfirmOrder = async (orderId: string) => {
+    const { error } = await supabase.from('orders').update({ status: 'confirmed' }).eq('id', orderId);
+
+    if (error) {
+      alert('Gagal konfirmasi: ' + error.message);
+    } else {
+      alert('Pesanan berhasil dikonfirmasi!');
+
+      // Refresh data agar tampilan status berubah tanpa reload halaman
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) fetchIncomingOrders(session.user.id);
+    }
+  };
+
   if (!user) return <p className="p-10 text-black">Loading...</p>;
 
   return (
@@ -66,10 +101,6 @@ export default function DashboardPage() {
               Anda terdaftar sebagai: <span className="font-semibold uppercase">{profile?.role || 'Belum diatur'}</span>
             </p>
           </div>
-
-          <button onClick={() => supabase.auth.signOut().then(() => router.push('/login'))} className="mt-4 bg-red-500 text-white px-4 py-2 rounded self-start">
-            Logout
-          </button>
         </div>
       </div>
 
@@ -88,10 +119,42 @@ export default function DashboardPage() {
           </form>
         </div>
       )}
+      {profile?.role === 'petani' && (
+        <div className="mt-10 p-6 border-2 border-dashed border-green-200 rounded-xl">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Pesanan Masuk dari Warga</h2>
+          <div className="space-y-4">
+            {incomingOrders.length === 0 ? (
+              <p className="text-gray-500 italic">Belum ada pesanan masuk.</p>
+            ) : (
+              incomingOrders.map((order) => (
+                <div key={order.id} className="bg-white border-l-4 border-green-500 p-4 shadow-sm flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-gray-700 capitalize">{order.products?.name}</p>
+                    <p className="text-sm text-gray-600">
+                      Pemesan: <span className="font-semibold">{order.buyer?.full_name}</span> ({order.quantity} Kg)
+                    </p>
+                    <p className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString('id-ID')}</p>
+                  </div>
 
-      <a href="/products" className="inline-block mt-4 text-green-600 font-semibold underline">
-        ← Lihat Semua Produk
-      </a>
+                  <div className="flex gap-2">
+                    <a href={`https://wa.me/${order.buyer?.phone_number}`} target="_blank" className="bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-bold">
+                      Chat WA
+                    </a>
+
+                    {order.status === 'pending' ? (
+                      <button className="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-green-700" onClick={() => handleConfirmOrder(order.id)}>
+                        Konfirmasi
+                      </button>
+                    ) : (
+                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm font-bold">Dikonfirmasi</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

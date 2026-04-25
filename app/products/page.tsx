@@ -71,11 +71,17 @@ export default function ProductsPage() {
         {items.map((item) => (
           <div key={item.id} className="bg-white p-5 rounded-xl shadow-sm border border-green-100 hover:shadow-md transition">
             {/* INFO PRODUK */}
+            {item.image_url ? (
+              <img src={item.image_url} alt={item.name} className="w-full h-48 object-cover rounded-lg mb-4" />
+            ) : (
+              <div className="w-full h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                <span className="text-gray-400">Tanpa Foto</span>
+              </div>
+            )}
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl font-bold text-gray-800 capitalize">{item.name}</h2>
               <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-semibold uppercase">Siap Panen</span>
             </div>
-
             <div className="space-y-2 mb-6 text-left">
               <p className="text-2xl font-bold text-green-600">
                 Rp {item.price?.toLocaleString()}
@@ -86,7 +92,6 @@ export default function ProductsPage() {
               </p>
               <p className="text-sm text-gray-500">Petani: {item.profiles?.full_name}</p>
             </div>
-
             {/* LOGIKA TOMBOL LANGSUNG DI SINI (TANPA MAP LAGI) */}
             <div className="mt-4">
               {currentUser && item.farmer_id === currentUser.id ? (

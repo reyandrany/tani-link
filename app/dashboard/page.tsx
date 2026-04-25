@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [incomingOrders, setIncomingOrders] = useState<any[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const fetchIncomingOrders = async (userId: string) => {
     const { data, error } = await supabase
       .from('orders')
@@ -56,8 +57,13 @@ export default function DashboardPage() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    let url = '';
+    if (imageFile) {
+      url = await uploadImage(imageFile);
+    }
+
     const { error } = await supabase.from('products').insert([
-      { name: productName, price: parseInt(price), stock: parseInt(stock), farmer_id: user.id }, // menghubungkan procuk ke petani yang login
+      { name: productName, price: parseInt(price), stock: parseInt(stock), farmer_id: user.id, image_url: url }, // menghubungkan procuk ke petani yang login
     ]);
 
     if (error) {
@@ -67,6 +73,7 @@ export default function DashboardPage() {
       setProductName('');
       setPrice('');
       setStock('');
+      setImageFile(null);
     }
   };
 
@@ -84,6 +91,24 @@ export default function DashboardPage() {
       } = await supabase.auth.getSession();
       if (session) fetchIncomingOrders(session.user.id);
     }
+  };
+
+  const uploadImage = async (file: File) => {
+    // Ganti nama file jadi angka unik biar aman dari karakter aneh
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = fileName; // JANGAN pake path yang ada foldernya dulu buat ngetes
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { data, error } = await supabase.storage.from('product-images').upload(filePath, file);
+
+    if (error) throw error;
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('product-images').getPublicUrl(filePath);
+
+    return publicUrl;
   };
 
   if (!user) return <p className="p-10 text-black">Loading...</p>;
@@ -113,6 +138,7 @@ export default function DashboardPage() {
               <input type="number" placeholder="Harga per Kg" className="border p-2 rounded flex-1 text-black" value={price} onChange={(e) => setPrice(e.target.value)} required />
               <input type="number" placeholder="Stok (Kg)" className="border p-2 rounded flex-1 text-black" value={stock} onChange={(e) => setStock(e.target.value)} required />
             </div>
+            <input type="file" accept="image/*" className="border p-2 rounded text-black bg-white" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
             <button type="submit" className="bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700">
               Posting Hasil Bumi
             </button>

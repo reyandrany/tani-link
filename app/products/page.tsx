@@ -70,12 +70,13 @@ export default function ProductsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {items.map((item) => (
           <div key={item.id} className="bg-white p-5 rounded-xl shadow-sm border border-green-100 hover:shadow-md transition">
+            {/* INFO PRODUK */}
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl font-bold text-gray-800 capitalize">{item.name}</h2>
               <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-semibold uppercase">Siap Panen</span>
             </div>
 
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2 mb-6 text-left">
               <p className="text-2xl font-bold text-green-600">
                 Rp {item.price?.toLocaleString()}
                 <span className="text-sm text-gray-400 font-normal"> /kg</span>
@@ -86,24 +87,18 @@ export default function ProductsPage() {
               <p className="text-sm text-gray-500">Petani: {item.profiles?.full_name}</p>
             </div>
 
-            {items.map((item) => (
-              <div key={item.id} className="bg-white p-5 rounded-xl shadow-sm border border-green-100">
-                {/* ... info produk lainnya ... */}
-
-                {/* LOGIKA TOMBAL DISINI */}
-                {currentUser && item.farmer_id === currentUser.id ? (
-                  // Jika ID petani di produk sama dengan ID user yang login
-                  <button disabled className="w-full bg-gray-100 text-gray-400 py-2 rounded-lg font-bold cursor-not-allowed border border-gray-200">
-                    Produk Anda Sendiri
-                  </button>
-                ) : (
-                  // Jika produk milik orang lain atau belum login
-                  <button onClick={() => handleOrder(item.id)} className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 transition">
-                    Pre-Order Sekarang
-                  </button>
-                )}
-              </div>
-            ))}
+            {/* LOGIKA TOMBOL LANGSUNG DI SINI (TANPA MAP LAGI) */}
+            <div className="mt-4">
+              {currentUser && item.farmer_id === currentUser.id ? (
+                <button disabled className="w-full bg-gray-100 text-gray-400 py-2 rounded-lg font-bold cursor-not-allowed border border-gray-200">
+                  Produk Anda Sendiri
+                </button>
+              ) : (
+                <button onClick={() => handleOrder(item.id)} className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 transition">
+                  Pre-Order Sekarang
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>

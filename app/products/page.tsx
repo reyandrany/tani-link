@@ -72,6 +72,7 @@ export default function ProductsPage() {
           <div key={item.id} className="bg-white p-5 rounded-xl shadow-sm border border-green-100 hover:shadow-md transition">
             {/* INFO PRODUK */}
             {item.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={item.image_url} alt={item.name} className="w-full h-48 object-cover rounded-lg mb-4" />
             ) : (
               <div className="w-full h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">

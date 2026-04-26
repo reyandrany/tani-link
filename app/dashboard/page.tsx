@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // tani-link/app/dashboard/page.tsx
 'use client';
@@ -14,6 +15,8 @@ export default function DashboardPage() {
   const [stock, setStock] = useState('');
   const [incomingOrders, setIncomingOrders] = useState<any[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [myProducts, setMyProducts] = useState<any[]>([]);
+
   const fetchIncomingOrders = async (userId: string) => {
     const { data, error } = await supabase
       .from('orders')
@@ -32,27 +35,45 @@ export default function DashboardPage() {
     if (!error) setIncomingOrders(data);
   };
 
+  const fetchMyProducts = async (userId: string) => {
+    const { data, error } = await supabase.from('products').select('*').eq('farmer_id', userId).order('harvest_date', { ascending: false });
+
+    if (!error) setMyProducts(data);
+  };
+
   useEffect(() => {
-    const getSession = async () => {
+    const initData = async () => {
+      // 1. Ambil Session (Cek Login)
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
+      // Jika tidak ada session, langsung lempar ke login
       if (!session) {
-        router.push('/login'); // Tendang ke login kalau belum masuk
+        router.push('/login');
         return;
       }
 
-      setUser(session.user);
+      // Simpan user login ke state
+      const currentUser = session.user;
+      setUser(currentUser);
 
-      fetchIncomingOrders(session.user.id); // Ambil pesanan masuk untuk petani yang login
+      // 2. Ambil Profil (Cek Role)
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
 
-      // Ambil data profil tambahan dari tabel profiles
-      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      if (profileData) {
+        setProfile(profileData);
 
-      setProfile(profileData);
+        // 3. Ambil data sesuai Role
+        if (profileData.role === 'petani') {
+          // Panggil fungsi fetch hanya untuk data si petani yang sedang login
+          fetchIncomingOrders(currentUser.id);
+          fetchMyProducts(currentUser.id);
+        }
+      }
     };
-    getSession();
+
+    initData();
   }, [router]);
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -74,6 +95,29 @@ export default function DashboardPage() {
       setPrice('');
       setStock('');
       setImageFile(null);
+      // Refresh products list
+      fetchMyProducts(user.id);
+    }
+  };
+
+  const handleDeleteProduct = async (productId: number, imageUrl: string) => {
+    if (!confirm('Yakin ingin menghapus produk ini?')) return;
+
+    // 1. Hapus fotonya dari Storage (jika ada)
+    if (imageUrl) {
+      const fileName = imageUrl.split('/').pop(); // Ambil nama file dari URL
+      await supabase.storage.from('product-images').remove([fileName!]);
+    }
+
+    // 2. Hapus datanya dari Database
+    const { error } = await supabase.from('products').delete().eq('id', productId);
+
+    if (error) {
+      alert('Gagal menghapus: ' + error.message);
+    } else {
+      alert('Produk berhasil dihapus!');
+      // Refresh data produk petani
+      fetchMyProducts(user.id);
     }
   };
 
@@ -128,7 +172,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
       {profile?.role === 'petani' && (
         <div className="mt-10 p-6 border-2 border-dashed border-green-200 rounded-xl">
           <h2 className="text-xl font-bold text-green-800 mb-4">Tambah Hasil Panen</h2>
@@ -145,6 +188,31 @@ export default function DashboardPage() {
           </form>
         </div>
       )}
+
+      {profile?.role === 'petani' && (
+        <div className="mt-10 p-6 border-2 border-dashed border-green-200 rounded-xl bg-white">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Produk Anda di Pasar</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myProducts.length === 0 ? (
+              <p className="text-gray-500 italic">Anda belum memposting produk apapun.</p>
+            ) : (
+              myProducts.map((item) => (
+                <div key={item.id} className="border border-gray-400 p-4 rounded-lg flex items-center gap-4">
+                  <img src={item.image_url} className="w-16 h-16 object-cover rounded" alt="Produk" />
+                  <div className="flex-1">
+                    <p className="font-bold capitalize">{item.name}</p>
+                    <p className="text-sm text-gray-500">Stok: {item.stock} kg</p>
+                  </div>
+                  <button onClick={() => handleDeleteProduct(item.id, item.image_url)} className="text-red-500 text-sm font-bold">
+                    Hapus
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
       {profile?.role === 'petani' && (
         <div className="mt-10 p-6 border-2 border-dashed border-green-200 rounded-xl">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Pesanan Masuk dari Warga</h2>

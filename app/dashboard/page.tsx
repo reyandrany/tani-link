@@ -243,7 +243,7 @@ export default function DashboardPage() {
         <p className="text-gray-600">Email: {user.email}</p>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="border p-4 rounded-lg bg-green-50">
+          <div className="border border-gray-300 p-4 rounded-lg bg-green-50">
             <h2 className="font-bold text-green-800 mb-2">Status Akun</h2>
             <p>
               Anda terdaftar sebagai: <span className="font-semibold uppercase">{profile?.role || 'Belum diatur'}</span>
@@ -252,26 +252,91 @@ export default function DashboardPage() {
         </div>
       </div>
       {profile?.role === 'petani' && (
-        <div className="mt-10 p-6 border-2 border-dashed border-green-200 rounded-xl">
-          <h2 className="text-xl font-bold text-green-800 mb-4">Tambah Hasil Panen</h2>
-          <form onSubmit={handleAddProduct} className="flex flex-col gap-3">
-            <input type="text" placeholder="Nama Sayur/Buah (Contoh: Tomat)" className="border p-2 rounded text-black" value={productName} onChange={(e) => setProductName(e.target.value)} required />
-            <div className="flex gap-2">
-              <input type="number" placeholder="Harga per Kg" className="border p-2 rounded flex-1 text-black" value={price} onChange={(e) => setPrice(e.target.value)} required />
-              <input type="number" placeholder="Stok (Kg)" className="border p-2 rounded flex-1 text-black" value={stock} onChange={(e) => setStock(e.target.value)} required />
+        <div className="mt-10 p-8 bg-white border border-gray-200 rounded-2xl shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-green-100 p-2 rounded-lg text-green-600 text-xl">🌱</div>
+            <h2 className="text-2xl font-bold text-gray-800">Tambah Hasil Panen</h2>
+          </div>
+
+          <form onSubmit={handleAddProduct} className="space-y-5">
+            {/* Nama Produk */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Nama Produk</label>
+              <input
+                type="text"
+                placeholder="Contoh: Tomat Ceri, Cabai Rawit..."
+                className="w-full border border-gray-300 p-3 rounded-xl text-black outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                required
+              />
             </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-xs text-gray-500 ml-1">Estimasi Tanggal Panen</label>
-              <input type="date" className="border p-2 rounded text-black bg-white outline-none focus:ring-2 focus:ring-green-500" value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} required />
+
+            {/* Harga & Stok (Grid 2 Kolom) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Harga (Rp/Kg)</label>
+                <input
+                  type="number"
+                  placeholder="25000"
+                  className="w-full border border-gray-300 p-3 rounded-xl text-black outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Stok (Kg)</label>
+                <input
+                  type="number"
+                  placeholder="10"
+                  className="w-full border border-gray-300 p-3 rounded-xl text-black outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <label htmlFor="image" className="text-xs text-gray-500 ml-1">
-                Gambar Produk
-              </label>
-              <input type="file" id="image" accept="image/*" className="border p-2 rounded text-black bg-white" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+
+            {/* Tanggal Panen */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Estimasi Tanggal Panen</label>
+              <input
+                type="date"
+                className="w-full border border-gray-300 p-3 rounded-xl text-black outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                value={harvestDate}
+                onChange={(e) => setHarvestDate(e.target.value)}
+                required
+              />
             </div>
-            <button type="submit" className="bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700">
-              Posting Hasil Bumi
+
+            {/* Upload Gambar */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Foto Produk</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-green-400 transition-colors bg-gray-50">
+                <div className="space-y-1 text-center">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path
+                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <div className="flex text-sm text-gray-600">
+                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 underline hover:text-green-500">
+                      <span>Upload file</span>
+                      <input type="file" accept="image/*" className="sr-only" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+                    </label>
+                    <p className="pl-1">atau drag and drop</p>
+                  </div>
+                  <p className="text-xs text-gray-500">{imageFile ? imageFile.name : 'PNG, JPG, GIF sampai 10MB'}</p>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-200 transition-all hover:scale-[1.02] active:scale-95">
+              🚀 Posting Hasil Bumi
             </button>
           </form>
         </div>

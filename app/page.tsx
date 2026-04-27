@@ -53,8 +53,71 @@ export default function Home() {
       </section>
 
       {/* Footer Minimalis */}
-      <footer className="bg-gray-100 py-10 text-center border-t">
-        <p className="text-gray-500 text-sm">© 2024 TaniLink - Mendukung Ekonomi Petani Desa</p>
+      <footer className="bg-gray-900 text-gray-300 py-16 px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+          {/* Kolom Branding */}
+          <div className="col-span-1 md:col-span-1">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              🌱 Tani<span className="text-green-400">Link</span>
+            </h2>
+            <p className="text-sm leading-relaxed">Mendukung ekonomi lokal dengan menghubungkan petani desa langsung ke pelanggan perkotaan.</p>
+          </div>
+
+          {/* Kolom Navigasi */}
+          <div>
+            <h4 className="text-white font-bold mb-4">Navigasi</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/products" className="hover:text-green-400 transition">
+                  Pasar Desa
+                </Link>
+              </li>
+              <li>
+                <Link href="/register" className="hover:text-green-400 transition">
+                  Daftar Petani
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="hover:text-green-400 transition">
+                  Masuk Akun
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Kolom Bantuan */}
+          <div>
+            <h4 className="text-white font-bold mb-4">Bantuan</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a href="#" className="hover:text-green-400 transition">
+                  Cara Kerja
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-green-400 transition">
+                  Syarat & Ketentuan
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-green-400 transition">
+                  Kebijakan Privasi
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Kolom Kontak */}
+          <div>
+            <h4 className="text-white font-bold mb-4">Kontak Kami</h4>
+            <p className="text-sm mb-2">📍 Desa Sitiharjo Kec. Tugumulyo Kab. Musirawas, Indonesia</p>
+            <p className="text-sm">📧 bantuan@tanilink.id</p>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto border-t border-gray-800 mt-12 pt-8 text-center text-xs">
+          <p>© {new Date().getFullYear()} TaniLink. Dibuat dengan ❤️ untuk Petani Indonesia.</p>
+        </div>
       </footer>
     </div>
   );

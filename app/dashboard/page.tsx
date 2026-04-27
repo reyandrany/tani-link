@@ -5,6 +5,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -29,12 +31,37 @@ export default function DashboardPage() {
         status,
         created_at,
         buyer:buyer_id (full_name, phone_number),
-        products!inner (id, name, farmer_id)`,
+        products:product_id!inner (id, name, price, farmer_id)`,
       )
       .eq('products.farmer_id', userId)
       .order('created_at', { ascending: false });
 
     if (!error) setIncomingOrders(data);
+  };
+
+  const downloadReport = () => {
+    const doc = new jsPDF();
+    //1. judul laporan
+    doc.text(`Laporan Penjualan TaniLink - ${profile?.full_name}`, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
+
+    //2. siapkan data tabel ( hanya yang statusnya confirmed/selesai)
+    const reportData = incomingOrders
+      .filter((order) => order.status === 'confirmed')
+      .map((order, index) => [index + 1, new Date(order.created_at).toLocaleDateString('id-ID'), order.products?.name, order.buyer?.full_name, `${order.quantity} Kg`, `Rp ${(order.products?.price * order.quantity).toLocaleString()}`]);
+
+    //3. buat tabel
+    autoTable(doc, {
+      startY: 30,
+      head: [['No', 'Tanggal', 'Produk', 'Pembeli', 'Jumlah', 'Total Harga']],
+      body: reportData,
+      theme: 'grid',
+      headStyles: { fillColor: [22, 163, 74] }, // warna hijau sukses
+    });
+
+    //4. download PDF
+    doc.save(`Laporan_TaniLink_${profile?.full_name}.pdf`);
   };
 
   const fetchMyProducts = async (userId: string) => {
@@ -295,7 +322,14 @@ export default function DashboardPage() {
 
       {profile?.role === 'petani' && (
         <div className="mt-10 p-6 border-2 border-dashed border-green-200 rounded-xl">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Pesanan Masuk dari Warga</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-800">Pesanan Masuk dari Warga</h2>
+            {incomingOrders.length > 0 && (
+              <button onClick={downloadReport} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-700 transition flex items-center gap-2">
+                📄 Cetak Laporan PDF
+              </button>
+            )}
+          </div>
           <div className="space-y-4">
             {incomingOrders.length === 0 ? (
               <p className="text-gray-500 italic">Belum ada pesanan masuk.</p>

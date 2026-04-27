@@ -16,6 +16,8 @@ export default function DashboardPage() {
   const [incomingOrders, setIncomingOrders] = useState<any[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [myProducts, setMyProducts] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [newStock, setNewStock] = useState('number');
 
   const fetchIncomingOrders = async (userId: string) => {
     const { data, error } = await supabase
@@ -121,19 +123,44 @@ export default function DashboardPage() {
     }
   };
 
-  const handleConfirmOrder = async (orderId: string) => {
-    const { error } = await supabase.from('orders').update({ status: 'confirmed' }).eq('id', orderId);
+  const handleConfirmOrder = async (orderId: string, productId: number, quantity: number) => {
+    try {
+      // 1. Ambil stok terbaru dari produk tersebut
+      const { data: product, error: fetchError } = await supabase.from('products').select('stock').eq('id', productId).single();
 
-    if (error) {
-      alert('Gagal konfirmasi: ' + error.message);
-    } else {
-      alert('Pesanan berhasil dikonfirmasi!');
+      if (fetchError) throw fetchError;
 
-      // Refresh data agar tampilan status berubah tanpa reload halaman
+      // 2. Cek apakah stok cukup
+      if (product.stock < quantity) {
+        alert('Gagal: Stok tidak mencukupi untuk pesanan ini!');
+        return;
+      }
+
+      // 3. Update Status Pesanan jadi 'confirmed'
+      const { error: orderError } = await supabase.from('orders').update({ status: 'confirmed' }).eq('id', orderId);
+
+      if (orderError) throw orderError;
+
+      // 4. Kurangi Stok di tabel products
+      const { error: stockError } = await supabase
+        .from('products')
+        .update({ stock: product.stock - quantity })
+        .eq('id', productId);
+
+      if (stockError) throw stockError;
+
+      alert('Pesanan dikonfirmasi & stok otomatis berkurang!');
+
+      // Refresh data dashboard
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (session) fetchIncomingOrders(session.user.id);
+      if (session) {
+        fetchIncomingOrders(session.user.id);
+        fetchMyProducts(session.user.id); // Refresh juga daftar stok produk petani
+      }
+    } catch (error: any) {
+      alert('Terjadi kesalahan: ' + error.message);
     }
   };
 
@@ -153,6 +180,30 @@ export default function DashboardPage() {
     } = supabase.storage.from('product-images').getPublicUrl(filePath);
 
     return publicUrl;
+  };
+
+  const handleUpdateStock = async (productId: number) => {
+    if (parseInt(newStock) < 0) return alert('Stok tidak boleh negatif!');
+
+    const { error } = await supabase
+      .from('products')
+      .update({ stock: parseInt(newStock) })
+      .eq('id', productId);
+
+    if (error) {
+      alert('Gagal update stok: ' + error.message);
+    } else {
+      alert('Stok berhasil diperbarui!');
+      setEditingId(null); //tutup form edit
+    }
+
+    //refresh halaman
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) {
+      fetchMyProducts(session.user.id);
+    }
   };
 
   if (!user) return <p className="p-10 text-black">Loading...</p>;
@@ -197,15 +248,44 @@ export default function DashboardPage() {
               <p className="text-gray-500 italic">Anda belum memposting produk apapun.</p>
             ) : (
               myProducts.map((item) => (
-                <div key={item.id} className="border border-gray-400 p-4 rounded-lg flex items-center gap-4">
-                  <img src={item.image_url} className="w-16 h-16 object-cover rounded" alt="Produk" />
-                  <div className="flex-1">
-                    <p className="font-bold capitalize">{item.name}</p>
-                    <p className="text-sm text-gray-500">Stok: {item.stock} kg</p>
+                // Di dalam myProducts.map((item) => ...)
+                <div key={item.id} className="border border-gray-400 p-4 rounded-lg flex flex-col gap-4 bg-white">
+                  <div className="flex items-center gap-4">
+                    <img src={item.image_url} className="w-16 h-16 object-cover rounded" alt="Produk" />
+                    <div className="flex-1">
+                      <p className="font-bold capitalize">{item.name}</p>
+
+                      {/* Tampilan Kondisional: Edit vs View */}
+                      {editingId === item.id ? (
+                        <div className="flex items-center gap-2 mt-2">
+                          <input type="number" className="border p-1 w-20 rounded text-black" value={newStock} onChange={(e) => setNewStock(String(parseInt(e.target.value)))} />
+                          <button onClick={() => handleUpdateStock(item.id)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs">
+                            Simpan
+                          </button>
+                          <button onClick={() => setEditingId(null)} className="text-gray-500 text-xs underline">
+                            Batal
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-500">Stok: {item.stock} kg</p>
+                          <button
+                            onClick={() => {
+                              setEditingId(item.id);
+                              setNewStock(item.stock);
+                            }}
+                            className="text-blue-600 text-xs font-bold underline"
+                          >
+                            Tambah/Ubah
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <button onClick={() => handleDeleteProduct(item.id, item.image_url)} className="text-red-500 text-sm font-bold">
+                      Hapus
+                    </button>
                   </div>
-                  <button onClick={() => handleDeleteProduct(item.id, item.image_url)} className="text-red-500 text-sm font-bold">
-                    Hapus
-                  </button>
                 </div>
               ))
             )}
@@ -236,7 +316,7 @@ export default function DashboardPage() {
                     </a>
 
                     {order.status === 'pending' ? (
-                      <button className="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-green-700" onClick={() => handleConfirmOrder(order.id)}>
+                      <button className="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-green-700" onClick={() => handleConfirmOrder(order.id, order.products.id, order.quantity)}>
                         Konfirmasi
                       </button>
                     ) : (

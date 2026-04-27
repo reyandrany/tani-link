@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [myProducts, setMyProducts] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [newStock, setNewStock] = useState('number');
+  const [harvestDate, setHarvestDate] = useState('');
 
   const fetchIncomingOrders = async (userId: string) => {
     const { data, error } = await supabase
@@ -113,7 +114,7 @@ export default function DashboardPage() {
     }
 
     const { error } = await supabase.from('products').insert([
-      { name: productName, price: parseInt(price), stock: parseInt(stock), farmer_id: user.id, image_url: url }, // menghubungkan procuk ke petani yang login
+      { name: productName, price: parseInt(price), stock: parseInt(stock), harvest_date: harvestDate, farmer_id: user.id, image_url: url }, // menghubungkan procuk ke petani yang login
     ]);
 
     if (error) {
@@ -238,7 +239,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8 text-black">
       <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
-        <h1 className="text-2xl font-bold text-green-700">Selamat Datang, {profile?.full_name || 'User'}!</h1>
+        <h1 className="text-2xl font-bold text-green-700 capitalize">Selamat Datang, {profile?.full_name || 'User'}!</h1>
         <p className="text-gray-600">Email: {user.email}</p>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -259,7 +260,16 @@ export default function DashboardPage() {
               <input type="number" placeholder="Harga per Kg" className="border p-2 rounded flex-1 text-black" value={price} onChange={(e) => setPrice(e.target.value)} required />
               <input type="number" placeholder="Stok (Kg)" className="border p-2 rounded flex-1 text-black" value={stock} onChange={(e) => setStock(e.target.value)} required />
             </div>
-            <input type="file" accept="image/*" className="border p-2 rounded text-black bg-white" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-xs text-gray-500 ml-1">Estimasi Tanggal Panen</label>
+              <input type="date" className="border p-2 rounded text-black bg-white outline-none focus:ring-2 focus:ring-green-500" value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} required />
+            </div>
+            <div className="flex flex-col gap-1 flex-1">
+              <label htmlFor="image" className="text-xs text-gray-500 ml-1">
+                Gambar Produk
+              </label>
+              <input type="file" id="image" accept="image/*" className="border p-2 rounded text-black bg-white" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+            </div>
             <button type="submit" className="bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700">
               Posting Hasil Bumi
             </button>

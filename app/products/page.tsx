@@ -116,6 +116,9 @@ export default function ProductsPage() {
                 Rp {item.price?.toLocaleString()}
                 <span className="text-sm text-gray-400 font-normal"> /kg</span>
               </p>
+              <div className="flex items-center gap-2 text-xs text-orange-600 font-bold mb-2">
+                <span>📅 Panen: {item.harvest_date ? new Date(item.harvest_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Segera'}</span>
+              </div>
               <p className="text-sm text-gray-600">
                 Stok: <strong>{item.stock} kg</strong>
               </p>

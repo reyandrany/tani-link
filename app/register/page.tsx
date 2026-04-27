@@ -7,6 +7,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [role, setRole] = useState('pembeli');
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -20,6 +21,7 @@ export default function RegisterPage() {
         data: {
           full_name: fullName,
           role: role, // kirim data role ke metadata
+          phone_number: phone, // kirim data nomor telepon ke metadata
         },
       },
     });
@@ -40,6 +42,7 @@ export default function RegisterPage() {
           <input type="text" placeholder="Nama Lengkap" className="rounded border p-2 text-black outline-none focus:ring-2 focus:ring-green-500" onChange={(e) => setFullName(e.target.value)} required />
           <input type="email" placeholder="Email" className="rounded border p-2 text-black outline-none focus:ring-2 focus:ring-green-500" onChange={(e) => setEmail(e.target.value)} required />
           <input type="password" placeholder="Password" className="rounded border p-2 text-black outline-none focus:ring-2 focus:ring-green-500" onChange={(e) => setPassword(e.target.value)} required />
+          <input type="number" placeholder="Nomor WhatsApp (Contoh: 62812...)" className="rounded border p-2 text-black outline-none focus:ring-2 focus:ring-green-500" onChange={(e) => setPhone(e.target.value)} required />
           <select className="rounded border p-2 text-black outline-none focus:ring-2 focus:ring-green-500 bg-white" onChange={(e) => setRole(e.target.value)} value={role}>
             <option value="pembeli">Saya adalah Pembeli (Warga)</option>
             <option value="petani">Saya adalah Petani (Penyedia Hasil Bumi)</option>
